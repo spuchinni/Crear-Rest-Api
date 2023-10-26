@@ -50,10 +50,27 @@ class LibroController{
     
 
     async delete(req, res){
-        const libro = req.body;
-        const [result] = await pool.query(`DELETE FROM libros WHERE ISBN=(?)`, [libro.ISBN]);   
-        res.json({"Registros eliminados": result.affectedRows});
-    }
+        const libro = req.body;// rescatando los datos del postman
+        
+        try{
+            const [existeLibro] = await pool.query(
+                `SELECT * FROM libros WHERE ISBN = ?`,[libro.ISBN]);
+    
+            if (existeLibro.length > 0) {
+                const [result] = await pool.query(`DELETE FROM libros WHERE ISBN=(?)`, [libro.ISBN]);   
+                res.json({"Registros eliminados": result.affectedRows});
+                  
+            } else {
+                    res.status(409).json({ Error: 'El libro no existe' });
+                  
+            } 
+        } 
+          catch (error) {
+              res.status(500).json({ Error: 'Error en los datos de la base' });
+          }
+        }
+        
+    
 
     async update(req, res){
         const libro = req.body;
