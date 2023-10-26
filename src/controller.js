@@ -71,12 +71,45 @@ class LibroController{
         }
         
     
-
+//modificar registro
     async update(req, res){
         const libro = req.body;
-        const [result] = await pool.query(`UPDATE libros set nombre=(?), autor=(?), categoria=(?), añoPublicacion=(?), ISBN=(?) WHERE id=(?)`, [libro.nombre, libro.autor, libro.categoria, libro.añoPublicacion, libro.ISBN, libro.id]);   
-        res.json({"Registros actualizados": result.changedRows});
-    }
+        const schema = {
+            nombre: String,
+            autor: String,
+            categoria: String,
+            añoPublicacion: Date,
+            ISBN: String,
+          
+          };
+        
+          try {
+            for (const atributo in libro) {
+              if (!schema.hasOwnProperty(atributo)) {
+              // El atributo no existe en el schema
+                res.status(400).json({ Error: `El atributo ${atributo} no existe` });
+                return;
+              }
+            }
+
+            const [existeLibro] = await pool.query(
+                `SELECT * FROM libros WHERE ISBN = ?`,[libro.ISBN]);
+    
+                if (existeLibro.length > 0) {
+                  const [result] = await pool.query (`UPDATE libros SET nombre =(?), autor=(?), categoria=(?), añoPublicacion=(?) WHERE ISBN=(?)`, [libro.nombre, libro.autor, libro.categoria, libro.añoPublicacion, libro.ISBN]);
+                  res.json({"Registro Modificado": result.changedRows});       
+              } else {
+                res.status(404).json({ Error: 'Libro no encontrado' });         
+    
+              }
+            } catch (error) {
+              res.status(500).json({ Error: 'Error en la base de datos' });
+            }
+    
+        }
+
+        
+    
 
     async getOne(req, res){
         const id_libro = req.body.id
