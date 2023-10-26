@@ -8,10 +8,46 @@ class LibroController{
     }
 
     async add(req, res){
-        const libro = req.body
-        const [result] = await pool.query(`INSERT INTO libros (nombre, autor, categoria, añoPublicacion, ISBN) VALUES (?, ?, ?, ?, ?)`,[libro.nombre, libro.autor, libro.categoria, libro.añoPublicacion, libro.ISBN]);
-        res.json({"Id insertado": result.insertId});
-    }
+        const libro = req.body;
+        const schema = {
+            nombre: String,
+            autor: String,
+            categoria: String,
+            añoPublicacion: Date,
+            ISBN: String,
+          
+        };
+
+        try {
+            for (const atributo in libro) {
+            
+              if (!schema.hasOwnProperty(atributo)) {
+              // El atributo no existe en el schema
+                res.status(400).json({ Error: `El atributo ${atributo} no existe` });
+                return;
+              }
+            }
+
+            const [existeLibro] = await pool.query(
+                `SELECT * FROM libros WHERE ISBN = ?`,[libro.ISBN]);
+    
+                if (existeLibro.length > 0) {
+                  res.status(409).json({ Error: 'El libro ya existe' });
+              } else {
+                  // inserta el libro
+                  const [result] = await pool.query(
+                      'INSERT INTO libros (nombre, autor, categoria, anioPublicacion, ISBN) VALUES (?, ?, ?, ?, ?)',
+                      [libro.nombre, libro.autor, libro.categoria, libro.anioPublicacion, libro.ISBN]
+                  );
+                  res.json({ "Id Insertado": result.insertId });
+              }
+          } catch (error) {
+              res.status(500).json({ Error: 'Error en los datos de la base' });
+          }
+    
+        }
+       
+    
 
     async delete(req, res){
         const libro = req.body;
